@@ -6,3 +6,5 @@ config.json
 # Secret keys
 .openrouter_key
 
+# Assets
+/assets/
