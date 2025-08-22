@@ -90,3 +90,43 @@ def main():
         "Content-Type": "application/json",
         # These two are optional but recommended by OpenRouter
         "HTTP-Referer": args.referer,
+        "X-Title": args.title,
+    }
+
+    try:
+        r = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+        r.raise_for_status()
+        data = r.json()
+    except requests.exceptions.HTTPError as e:
+        # Print server error message if available
+        try:
+            err = r.json()
+            msg = err.get("error", err)
+        except Exception:
+            msg = str(e)
+        print(f"OpenRouter API error: {msg}", file=sys.stderr)
+        sys.exit(3)
+    except Exception as e:
+        print(f"Request failed: {e}", file=sys.stderr)
+        sys.exit(4)
+
+    # Extract assistant reply (OpenAI-style schema)
+    try:
+        reply = data["choices"][0]["message"]["content"]
+    except Exception:
+        print(f"Unexpected response format: {json.dumps(data)[:500]}", file=sys.stderr)
+        sys.exit(5)
+
+    # Persist updated history
+    messages.append({"role": "assistant", "content": reply})
+    save_history(cid, messages)
+
+    if args.json:
+        print(json.dumps({"conversation_id": cid, "text": reply}, ensure_ascii=False))
+    else:
+        # Plain output for easy piping; include cid hint on a separate line
+        print(reply)
+        print(f"\n[conversation_id: {cid}]", file=sys.stderr)
+
+if __name__ == "__main__":
+    main()
