@@ -2,3 +2,6 @@
 config.json
 /localStorage.json
 /history.json
+
+# Secrets
+.openrouter_key
