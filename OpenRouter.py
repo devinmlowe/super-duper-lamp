@@ -29,9 +29,46 @@ def read_api_key():
     if key:
         return key
     if KEY_FILE.exists():
-        return KEY_FILE.read_text().strip()
-    print("Missing OpenRouter API key. Set OPENROUTER_API_KEY or put it in ~/.openrouter_key", file=sys.stderr)
-    sys.exit(2)
+        try:
+            k = KEY_FILE.read_text().strip()
+            if k:
+                return k
+        except Exception:
+            pass
+
+    # If non-interactive, fail with helpful message
+    if not sys.stdin.isatty():
+        print("Missing OpenRouter API key. Set OPENROUTER_API_KEY or put it in ~/.openrouter_key", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        key = input("OpenRouter API key not found. Paste key now (or leave empty to abort): ").strip()
+    except EOFError:
+        print("No input available. Aborting.", file=sys.stderr)
+        sys.exit(2)
+
+    if not key:
+        print("No API key provided. Aborting.", file=sys.stderr)
+        sys.exit(2)
+
+    # Ask whether to save the key to ~/.openrouter_key
+    try:
+        resp = input(f"Save key to {KEY_FILE} for future use? [Y/n]: ").strip().lower()
+    except EOFError:
+        resp = "y"
+
+    if resp in ("", "y", "yes"):
+        try:
+            KEY_FILE.write_text(key + "\n", encoding="utf-8")
+            try:
+                os.chmod(KEY_FILE, 0o600)
+            except Exception:
+                pass
+            print(f"Saved key to {KEY_FILE}", file=sys.stderr)
+        except Exception as e:
+            print(f"Warning: failed to save key: {e}", file=sys.stderr)
+
+    return key
 
 def load_history(cid: str):
     path = STORE_DIR / f"{cid}.json"
