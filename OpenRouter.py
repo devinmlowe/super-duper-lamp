@@ -20,9 +20,15 @@ except ImportError:
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_MODEL = "openrouter/auto"  # good default on OpenRouter
 
-HOME = Path.home()
-STORE_DIR = HOME / ".openrouter_chats"
-KEY_FILE = HOME / ".openrouter_key"
+try:
+    SCRIPT_DIR = Path(__file__).resolve().parent
+except Exception:
+    # Fallback to current working directory if __file__ isn't available
+    SCRIPT_DIR = Path.cwd().resolve()
+
+ASSETS_DIR = SCRIPT_DIR / "assets"
+STORE_DIR = ASSETS_DIR / ".openrouter_chats"
+KEY_FILE = ASSETS_DIR / ".openrouter_key"
 
 def read_api_key():
     key = os.getenv("OPENROUTER_API_KEY", "").strip()
