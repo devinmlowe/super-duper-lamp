@@ -19,10 +19,32 @@ user_input = sys.argv[2]
 history_file = sys.argv[3]
 service_name = sys.argv[4]  # e.g., "ChatGPT" or "mistral"
 
-# === LOAD CONFIG.JSON FROM SAME DIRECTORY AS SCRIPT ===
+# === PATHS ===
 script_dir = os.path.dirname(os.path.realpath(__file__))
 config_path = os.path.join(script_dir, "config.json")
 
+# === ENSURE config.json EXISTS (CREATE SKELETON IF MISSING) ===
+if not os.path.exists(config_path):
+    skeleton = {
+        "keys": {
+            "ChatGPT": [
+                "sk-your-openai-key-here"
+            ],
+            "mistral": [
+                "mistral-key-here"
+            ]
+        }
+    }
+    try:
+        with open(config_path, "w") as f:
+            json.dump(skeleton, f, indent=2)
+        print(f"Created config skeleton at: {config_path}")
+        print("Add your API key(s) under the appropriate service and re-run.")
+    except Exception as e:
+        print(f"Failed to create config.json: {e}")
+    sys.exit(1)
+
+# === LOAD CONFIG ===
 try:
     with open(config_path, 'r') as f:
         config = json.load(f)
@@ -33,11 +55,12 @@ except Exception as e:
 # === GET API KEY FOR SERVICE ===
 try:
     api_keys = config["keys"][service_name]
-    if not api_keys:
-        raise ValueError(f"No keys found for {service_name}")
+    if not api_keys or not api_keys[0] or "your-openai-key" in api_keys[0]:
+        print(f"No valid API key found for '{service_name}' in {config_path}. Edit the file and re-run.")
+        sys.exit(1)
     API_KEY = api_keys[0]  # use the first key
 except KeyError:
-    print(f"Service '{service_name}' not found in config.json")
+    print(f"Service '{service_name}' not found in config.json (under 'keys').")
     sys.exit(1)
 
 # === LOAD OR CREATE CONVERSATION HISTORY ===
@@ -66,7 +89,6 @@ headers = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
-
 data = {
     "model": MODEL,
     "messages": conversation_history,
