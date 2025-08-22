@@ -3,5 +3,6 @@ config.json
 /localStorage.json
 /history.json
 
-# Secrets
+# Secret keys
 .openrouter_key
+
