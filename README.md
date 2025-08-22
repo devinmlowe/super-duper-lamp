@@ -81,3 +81,5 @@ The config.json file must be located in the same directory as chatGPT.py and sho
 
 >Security Note: Add config.json to your .gitignore file to prevent accidental commits.
 
+## 2025-08-22
+> Added/created OpenRouter functionality
